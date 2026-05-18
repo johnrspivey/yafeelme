@@ -4,8 +4,68 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>yafeelme</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+h1{color:#fff;font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-bottom:18px;opacity:0.9;}
+#container{width:100%;max-width:420px;}
+textarea{width:100%;height:90px;font-size:14px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);resize:none;font-family:Georgia,serif;color:#fff;background:rgba(255,255,255,0.08);outline:none;}
+textarea::placeholder{
+cat > ~/Desktop/yafeelme/index.html << 'ENDOFFILE'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>yafeelme</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+h1{color:#fff;font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-bottom:18px;opacity:0.9;}
+#container{width:100%;max-width:420px;}
+textarea{width:100%;height:90px;font-size:14px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);resize:none;font-family:Georgia,serif;color:#fff;background:rgba(255,255,255,0.08);outline:none;}
+textarea::placeholder{color:rgba(255,255,255,0.35);font-style:italic;}
+textarea:focus{border-color:rgba(255,255,255,0.35);}
+#btn{width:100%;margin-top:8px;padding:11px;font-size:14px;font-weight:500;border-radius:12px;border:none;background:#fff;color:#111;cursor:pointer;}
+#btn:disabled{opacity:0.4;cursor:default;}
+#status{font-size:12px;color:rgba(255,255,255,0.4);text-align:center;margin:6px 0;min-height:16px;}
+#card{margin-top:8px;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);display:none;}
+#card-inner{min-height:160px;padding:20px 16px 16px;transition:background 1.2s ease;}
+#card-text{font-family:Georgia,serif;font-size:15px;line-height:2.4;}
+#card-footer{padding:7px 12px;background:rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;}
+#dom-dot{width:8px;height:8px;border-radius:50%;background:#aaa;flex-shrink:0;transition:background 0.8s;}
+#dom-label{font-size:11px;color:rgba(255,255,255,0.75);flex:1;}
+#hint{font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:10px;}
+.fig{display:inline-block;vertical-align:middle;margin:0 2px;}
+.divider{display:block;text-align:center;margin:8px 0 4px;}
+.dline{display:inline-block;width:50px;height:0.5px;background:rgba(255,255,255,0.25);vertical-align:middle;margin:0 6px;}
+</style>
 </head>
 <body>
-<h1>yafeelme is working</h1>
+<div id="container">
+<h1>yafeelme</h1>
+<textarea id="msg" placeholder="Type your message… mix emotions and see what happens."></textarea>
+<button id="btn" onclick="analyze()">Read my vibe</button>
+<div id="status"></div>
+<div id="card">
+<div id="card-inner"><div id="card-text"></div></div>
+<div id="card-footer"><div id="dom-dot"></div><span id="dom-label">—</span></div>
+</div>
+<div id="hint">screenshot and send it</div>
+</div>
+<script>
+const PROXY='/.netlify/functions/tone';
+const TONES={happy:{color:'#F6C94E',bg:'#9a6c08',group:'warm'},excited:{color:'#5DD890',bg:'#156638',group:'warm'},flirty:{color:'#F0A0C8',bg:'#7a2a50',group:'warm'},hopeful:{color:'#7EC8C0',bg:'#166660',group:'warm'},chill:{color:'#90C0F0',bg:'#184a80',group:'cool'},sad:{color:'#90A8CC',bg:'#223355',group:'cool'},melancholy:{color:'#A898CC',bg:'#3a2258',group:'cool'},sarcastic:{color:'#C8A0F0',bg:'#4a1a80',group:'sharp'},angry:{color:'#FF8866',bg:'#7a1a08',group:'sharp'},frustrated:{color:'#F0A860',bg:'#703008',group:'sharp'},passive:{color:'#D4C878',bg:'#585010',group:'sharp'},neutral:{color:'#B8B8B8',bg:'#303035',group:'cool'}};
+const GD={warm:{warm:0,cool:2,sharp:3},cool:{warm:2,cool:0,sharp:2},sharp:{warm:3,cool:2,sharp:1}};
+function normTone(r){if(!r)return'neutral';const s=r.toLowerCase().trim().replace(/[^a-z]/g,'');return TONES[s]?s:(Object.keys(TONES).find(k=>s.includes(k))||'neutral');}
+function dominant(sc){const c={};sc.forEach(s=>{c[s.tone]=(c[s.tone]||0)+1;});return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0];}
+function shiftSize(a,b){if(!a||a===b)return 0;return GD[TONES[a]?.group||'cool'][TONES[b]?.group||'cool'];}
+function stick(tone,sz){const c=sz/2,h=sz*0.18;const p={angry:`<circle cx="${c}" cy="${h}" r="${h}" fill="none" stroke="white" stroke-width="1.8"/><line x1="${c-h*.7}" y1="${h*.7}" x2="${c+h*.7}" y2="${h*.95}" stroke="white" stroke-width="1.5"/><line x1="${c}" y1="${h*2}" x2="${c}" y2="${sz*.64}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.38}" x2="${c-sz*.22}" y2="${sz*.26}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.38}" x2="${c+sz*.22}" y2="${sz*.26}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.64}" x2="${c-sz*.18}" y2="${sz*.96}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.64}" x2="${c+sz*.18}" y2="${sz*.96}" stroke="white" stroke-width="1.8"/>`,frustrated:`<circle cx="${c}" cy="${h}" r="${h}" fill="none" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${h*2}" x2="${c}" y2="${sz*.64}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.38}" x2="${c-sz*.22}" y2="${sz*.44}" stroke="white" stroke-width="1.8"/><line x1="${c-sz*.22}" y1="${sz*.44}" x2="${c-sz*.22}" y2="${sz*.3}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.38}" x2="${c+sz*.22}" y2="${sz*.44}" stroke="white" stroke-width="1.8"/><line x1="${c+sz*.22}" y1="${sz*.44}" x2="${c+sz*.22}" y2="${sz*.3}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.64}" x2="${c-sz*.15}" y2="${sz*.97}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.64}" x2="${c+sz*.15}" y2="${sz*.97}" stroke="white" stroke-width="1.8"/>`,sarcastic:`<circle cx="${c}" cy="${h}" r="${h}" fill="none" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${h*2}" x2="${c}" y2="${sz*.64}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.38}" x2="${c-sz*.18}" y2="${sz*.3}" stroke="white" stroke-width="1.8"/><line x1="${c-sz*.18}" y1="${sz*.3}" x2="${c-sz*.28}" y2="${sz*.44}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.38}" x2="${c+sz*.28}" y2="${sz*.5}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.64}" x2="${c-sz*.15}" y2="${sz*.97}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.64}" x2="${c+sz*.15}" y2="${sz*.97}" stroke="white" stroke-width="1.8"/>`,excited:`<circle cx="${c}" cy="${h}" r="${h}" fill="none" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${h*2}" x2="${c}" y2="${sz*.62}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.36}" x2="${c-sz*.3}" y2="${sz*.2}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.36}" x2="${c+sz*.3}" y2="${sz*.2}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.62}" x2="${c-sz*.22}" y2="${sz*.9}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.62}" x2="${c+sz*.22}" y2="${sz*.9}" stroke="white" stroke-width="1.8"/>`,passive:`<circle cx="${c}" cy="${h}" r="${h}" fill="none" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${h*2}" x2="${c}" y2="${sz*.66}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.4}" x2="${c-sz*.2}" y2="${sz*.5}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.4}" x2="${c+sz*.2}" y2="${sz*.5}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.66}" x2="${c-sz*.12}" y2="${sz*.97}" stroke="white" stroke-width="1.8"/><line x1="${c}" y1="${sz*.66}" x2="${c+sz*.12}" y2="${sz*.97}" stroke="white" stroke-width="1.8"/>`};const map={angry:'angry',frustrated:'frustrated',sarcastic:'sarcastic',excited:'excited',passive:'passive'};return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg">${p[map[tone]]||p.angry}</svg>`;}
+function blob(tone,sz){const c=sz/2;const f={happy:`<ellipse cx="${c}" cy="${sz*.4}" rx="${sz*.32}" ry="${sz*.3}" fill="none" stroke="white" stroke-width="2"/><circle cx="${c-sz*.1}" cy="${sz*.37}" r="${sz*.04}" fill="white"/><circle cx="${c+sz*.1}" cy="${sz*.37}" r="${sz*.04}" fill="white"/><path d="M${c-sz*.12} ${sz*.46}Q${c} ${sz*.54}${c+sz*.12} ${sz*.46}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="${c}" cy="${sz*.78}" rx="${sz*.2}" ry="${sz*.15}" fill="none" stroke="white" stroke-width="1.8"/>`,sad:`<ellipse cx="${c}" cy="${sz*.4}" rx="${sz*.32}" ry="${sz*.3}" fill="none" stroke="white" stroke-width="2"/><circle cx="${c-sz*.1}" cy="${sz*.37}" r="${sz*.04}" fill="white"/><circle cx="${c+sz*.1}" cy="${sz*.37}" r="${sz*.04}" fill="white"/><path d="M${c-sz*.12} ${sz*.5}Q${c} ${sz*.43}${c+sz*.12} ${sz*.5}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="${c}" cy="${sz*.8}" rx="${sz*.16}" ry="${sz*.12}" fill="none" stroke="white" stroke-width="1.8"/>`,flirty:`<ellipse cx="${c}" cy="${sz*.4}" rx="${sz*.32}" ry="${sz*.3}" fill="none" stroke="white" stroke-width="2"/><path d="M${c-sz*.14} ${sz*.35}Q${c-sz*.1} ${sz*.31}${c-sz*.06} ${sz*.35}" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/><circle cx="${c+sz*.1}" cy="${sz*.36}" r="${sz*.04}" fill="white"/><path d="M${c-sz*.12} ${sz*.47}Q${c} ${sz*.54}${c+sz*.12} ${sz*.47}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="${c}" cy="${sz*.78}" rx="${sz*.2}" ry="${sz*.15}" fill="none" stroke="white" stroke-width="1.8"/>`,chill:`<ellipse cx="${c}" cy="${sz*.4}" rx="${sz*.32}" ry="${sz*.3}" fill="none" stroke="white" stroke-width="2"/><path d="M${c-sz*.14} ${sz*.36}L${c-sz*.06} ${sz*.36}" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M${c+sz*.06} ${sz*.36}L${c+sz*.14} ${sz*.36}" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M${c-sz*.1} ${sz*.47}Q${c} ${sz*.5}${c+sz*.1} ${sz*.47}" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="${c}" cy="${sz*.8}" rx="${sz*.2}" ry="${sz*.15}" fill="none" stroke="white" stroke-width="1.8"/>`};const map={happy:'happy',excited:'happy',hopeful:'happy',flirty:'flirty',sad:'sad',melancholy:'sad',chill:'chill',neutral:'chill'};return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg">${f[map[tone]]||f.happy}</svg>`;}
+function fig(tone,sz){return['angry','frustrated','sarcastic','passive','excited'].includes(tone)?stick(tone,sz):blob(tone,sz);}
+function divider(tone){return`<div class="divider"><span class="dline"></span>${fig(tone,42)}<span class="dline"></span></div>`;}
+function renderCard(scored){const dom=dominant(scored);const t=TONES[dom]||TONES.neutral;document.getElementById('card').style.display='block';document.getElementById('card-inner').style.background=t.bg;document.getElementById('dom-dot').style.background=t.color;document.getElementById('dom-label').textContent=dom.charAt(0).toUpperCase()+dom.slice(1)+' overall';let html='',prev=null;scored.forEach(item=>{const cur=item.tone;const td=TONES[cur]||TONES.neutral;const changed=prev!==null&&cur!==prev;const shift=shiftSize(prev,cur);if(changed&&shift>=3)html+=divider(cur);html+=`<span style="color:${td.color};text-shadow:0 1px 5px rgba(0,0,0,0.55);">${item.sentence} `;if(changed&&shift>0&&shift<3)html+=`<span class="fig">${fig(cur,22)}</span>`;html+=`</span>`;prev=cur;});document.getElementById('card-text').innerHTML=html;}
+async function analyze(){const txt=document.getElementById('msg').value.trim();if(!txt){document.getElementById('status').textContent='Type something first.';return;}const btn=document.getElementById('btn');btn.disabled=true;document.getElementById('status').textContent='Reading your vibe…';try{const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt})});const data=await res.json();if(data.error)throw new Error(data.error);const scored=data.sentences.map(p=>({sentence:p.sentence,tone:normTone(p.tone)}));renderCard(scored);document.getElementById('status').textContent='';}catch(e){document.getElementById('status').textContent='Error: '+e.message.slice(0,80);}btn.disabled=false;}
+</script>
 </body>
 </html>
